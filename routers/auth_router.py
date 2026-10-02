@@ -1,11 +1,7 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-import jwt
-import os
-from dotenv import load_dotenv
-from datetime import datetime, timezone, timedelta
+from app.auth import hash_password, verify_password, create_access_token
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,25 +12,6 @@ from app.models import Clients, Dealers
 from app.schemas import ClientResponse, ClientCreate, DealerResponse, DealerCreate
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
-load_dotenv()
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-ALGORITHM = "HS256"
-
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({'exp': expire})
-    encoded = jwt.encode(to_encode, os.getenv("SECRET_KEY"), algorithm=ALGORITHM)
-    return encoded
 
 
 @router.post('/register/client', response_model=ClientResponse)
