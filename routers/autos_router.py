@@ -1,5 +1,3 @@
-import datetime
-
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,8 +6,8 @@ from sqlalchemy.orm import selectinload
 from datetime import date
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Autos, Models, Dealers, Clients, Deals
-from app.schemas import AutoResponse, AutoCreate, DealerResponse
+from app.models import Autos, Models, Dealers, Clients, Deals, Marks
+from app.schemas import AutoResponse, AutoCreate, DealerResponse, MarkResponse, ModelResponse, MarkCreate, ModelCreate
 
 router = APIRouter(prefix='/cars', tags=['Cars'])
 
@@ -34,13 +32,53 @@ async def get_available_cars(db: AsyncSession = Depends(get_db)):
     autos = result.scalars().all()
     return autos
 
+
+@router.get('/marks', response_model=list[MarkResponse])
+async def get_marks(db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(Marks))
+    marks = res.scalars().all()
+    return marks
+
+
+@router.get('/models', response_model=[ModelResponse])
+async def get_models(db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(Models))
+    models = res.scalars().all()
+    return models
+
+
+@router.post('/add_mark', response_model=MarkResponse)
+async def add_mark(mark: MarkCreate, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(Marks).where(Marks.name_mark == mark.name_mark))
+    mark_result = res.scalar_one_or_none()
+    if mark_result is not None:
+        raise HTTPException(status_code=409, detail='mark already exists')
+    new_mark = Marks(name_mark=mark.name_mark)
+    db.add(new_mark)
+    await db.commit()
+    await db.refresh(new_mark)
+    return new_mark
+
+@router.post('/add_model', response_model=ModelResponse)
+async def add_model(model: ModelCreate, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(Models).where(Models.name_model==model.name_model))
+    model_res = res.scalar_one_or_none()
+    if model_res is not None:
+        raise HTTPException(status_code=409, detail='mark already exists')
+    new_model = Models(id_mark=model.id_mark, name_model=model.name_model)
+    db.add(new_model)
+    await db.commit()
+    await db.refresh(new_model)
+    return new_model
+
 @router.get('/{car_id}', response_model=AutoResponse)
 async def get_car(car_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Autos).where(Autos.id_auto==car_id, Autos.status=="Available"))
+    result = await db.execute(select(Autos).where(Autos.id_auto == car_id, Autos.status == "Available"))
     car = result.scalar_one_or_none()
     if car is None:
         raise HTTPException(status_code=404, detail='car not found')
     return car
+
 
 @router.post('/add_car', response_model=AutoCreate)
 async def add_car(auto: AutoCreate, db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
