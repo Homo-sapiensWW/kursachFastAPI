@@ -7,7 +7,8 @@ from datetime import date
 from app.auth import get_current_user
 from app.database import get_db
 from app.models import Autos, Models, Dealers, Clients, Deals, Marks
-from app.schemas import AutoResponse, AutoCreate, DealerResponse, MarkResponse, ModelResponse, MarkCreate, ModelCreate
+from app.schemas import AutoResponse, AutoCreate, DealerResponse, MarkResponse, ModelResponse, MarkCreate, ModelCreate, \
+    DealResponse
 
 router = APIRouter(prefix='/cars', tags=['Cars'])
 
@@ -34,21 +35,21 @@ async def get_available_cars(db: AsyncSession = Depends(get_db)):
 
 
 @router.get('/marks', response_model=list[MarkResponse])
-async def get_marks(db: AsyncSession = Depends(get_db)):
+async def get_marks(db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
     res = await db.execute(select(Marks))
     marks = res.scalars().all()
     return marks
 
 
-@router.get('/models', response_model=[ModelResponse])
-async def get_models(db: AsyncSession = Depends(get_db)):
+@router.get('/models', response_model=list[ModelResponse] )
+async def get_models(db: AsyncSession = Depends(get_db),dealer: Dealers = Depends(require_dealer)):
     res = await db.execute(select(Models))
     models = res.scalars().all()
     return models
 
 
 @router.post('/add_mark', response_model=MarkResponse)
-async def add_mark(mark: MarkCreate, db: AsyncSession = Depends(get_db)):
+async def add_mark(mark: MarkCreate, db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
     res = await db.execute(select(Marks).where(Marks.name_mark == mark.name_mark))
     mark_result = res.scalar_one_or_none()
     if mark_result is not None:
@@ -60,7 +61,7 @@ async def add_mark(mark: MarkCreate, db: AsyncSession = Depends(get_db)):
     return new_mark
 
 @router.post('/add_model', response_model=ModelResponse)
-async def add_model(model: ModelCreate, db: AsyncSession = Depends(get_db)):
+async def add_model(model: ModelCreate, db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
     res = await db.execute(select(Models).where(Models.name_model==model.name_model))
     model_res = res.scalar_one_or_none()
     if model_res is not None:
@@ -72,9 +73,10 @@ async def add_model(model: ModelCreate, db: AsyncSession = Depends(get_db)):
     return new_model
 
 @router.get('/{car_id}', response_model=AutoResponse)
-async def get_car(car_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Autos).where(Autos.id_auto == car_id, Autos.status == "Available"))
-    car = result.scalar_one_or_none()
+async def get_car(car_id: int, db: AsyncSession = Depends(get_db), user = Depends(get_current_user)):
+    stmt = select(Autos).options(selectinload(Autos.photos)).where(Autos.id_auto == car_id, Autos.status == "Available")
+    res = await db.execute(stmt)
+    car = res.scalar_one_or_none()
     if car is None:
         raise HTTPException(status_code=404, detail='car not found')
     return car
@@ -93,7 +95,7 @@ async def add_car(auto: AutoCreate, db: AsyncSession = Depends(get_db), dealer: 
     return auto
 
 
-@router.post('/{car_id}/buy_car', response_model=DealerResponse)
+@router.post('/{car_id}/buy_car', response_model=DealResponse)
 async def by_car(car_id: int, client: Clients = Depends(require_client),
                  db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Autos).where(Autos.id_auto == car_id))
@@ -104,7 +106,7 @@ async def by_car(car_id: int, client: Clients = Depends(require_client),
         raise HTTPException(status_code=409, detail='auto already reserved')
     discount = client.discount
     sold_price = auto.price * (1 - discount / 100)
-    deal = Deals(id_client=client.id_client, id_auto=auto.id_auto, id_dealer=None, deal_status='Processing',
+    deal = Deals(id_client=client.id_client, id_auto=auto.id_auto, deal_status='Processing',
                  date_deal=date.today(), sold_price=sold_price)
     auto.status = 'Reserved'
     db.add(deal)
