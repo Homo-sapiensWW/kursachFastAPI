@@ -19,7 +19,7 @@ class MarkCreate(BaseModel):
 class MarkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id_mark: int
+    mark_id: int
     name_mark: str = Field(max_length=50)
 
 
@@ -144,5 +144,31 @@ class DealResponse(BaseModel):
     date_deal: date
     date_sale: date | None = None
 
+class PendingDealOut(BaseModel):
+    id_deal: int
+    date_deal: date
+    sold_price: Decimal
+    client_name: str
+    client_phone: str
+    client_email: str | None
+    mark_name: str
+    model_name: str
+    year_release: int
+    mileage: int
+    engine_type: str
+    engine_capacity: Decimal
 
+class AllDealsOut(BaseModel):
+    id_deal: int
+    date_deal: date
+    sold_price: Decimal
+    client_name: str
+    client_phone: str
+    client_email: str | None
+    mark_name: str
+    model_name: str
+    year_release: int
+    dealer_name: str | None
+    date_sale: date | None
+    deal_status:Literal["Processing", "Confirmed"]
 AutoResponse.model_rebuild()
