@@ -17,7 +17,7 @@ router = APIRouter(prefix='/dealer', tags=['dealer'], dependencies=[Depends(requ
 
 @router.patch('/{deal_id}/confirm', response_model=DealResponse)
 async def confirm_deal(deal_id: int, db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
-    result = await db.execute(select(Deals).where(Deals.id_deal == deal_id))
+    result = await db.execute(select(Deals).options(selectinload(Deals.auto), selectinload(Deals.client)).where(Deals.id_deal == deal_id))
     deal: Deals = result.scalar_one_or_none()
     if deal is None:
         raise HTTPException(status_code=404, detail='deal not found')
@@ -41,7 +41,7 @@ async def confirm_deal(deal_id: int, db: AsyncSession = Depends(get_db), dealer:
 
 @router.patch('/{deal_id}/reject', response_model=DealResponse)
 async def reject_deal(deal_id: int, dealer: Dealers = Depends(require_dealer), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Deals).where(Deals.id_deal == deal_id))
+    result = await db.execute(select(Deals).options(selectinload(Deals.auto)).where(Deals.id_deal == deal_id))
     deal: Deals = result.scalar_one_or_none()
     if deal is None:
         raise HTTPException(status_code=404, detail='deal not found')
