@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
-from app.auth import get_current_user
+from sqlalchemy import select
+
 from app.database import get_db
 from datetime import date
 from app.models import Autos, Models, Dealers, Clients, Deals
-from app.schemas import AutoResponse, AutoCreate, DealerResponse, DealResponse, PendingDealOut
+from app.schemas import DealResponse, PendingDealOut
 from routers.autos_router import require_dealer
 from sqlalchemy import func
 import decimal
