@@ -74,13 +74,30 @@ class ClientResponse(BaseModel):
     address_client: str | None = None
     discount: Decimal
 
+class ClientHistory(BaseModel):
+    status: Literal['Processing', 'Confirmed']
+    date_deal: date
+    price: Decimal
+    mark: str
+    model: str
+    year_release: int = Field(ge=1900, le=2026)
+    photo_path: str | None = None
 
+class ClientStatistic(BaseModel):
+    total_deals: int
+    confirmed_deals: int
+    sum_confirmed_deals: Decimal
+
+class ProfileOut(BaseModel):
+    client: ClientResponse
+    stats: ClientStatistic
+    history: list[ClientHistory]
 
 class AutoCreate(BaseModel):
     id_model: int
     vin: str = Field(min_length=17, max_length=17)
     price: Decimal = Field(gt=0)
-    year_release: int = Field(ge=1900, le=2025)
+    year_release: int = Field(ge=1900, le=2026)
     mileage: int = Field(ge=0)
     date_to_sale: date
     engine_type: Literal["Petrol", "Diesel", "Electric", "Hybrid"]
