@@ -53,7 +53,18 @@ class DealerResponse(BaseModel):
     phone_dealer: str = Field(max_length=20)
     address_dealer: str | None = None
 
+class DataString(BaseModel):
+    date_deal: date
+    mark: str
+    model: str
+    year_release: int = Field(ge=1900, le=2026)
+    name_client: str
+    client_phone: str = Field(max_length=20)
 
+class DealerStatsOut(BaseModel):
+    name_dealer: str
+    deals_count:int
+    deals_history: list[DataString]
 
 
 class ClientCreate(BaseModel):
