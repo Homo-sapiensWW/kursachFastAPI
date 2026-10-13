@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.database import get_db
 from datetime import date
 from app.models import Autos, Models, Dealers, Clients, Deals
-from app.schemas import DealResponse, PendingDealOut
+from app.schemas import DealResponse, PendingDealOut, DealerStatsOut, DataString
 from routers.autos_router import require_dealer
 from sqlalchemy import func
 import decimal
@@ -17,7 +17,8 @@ router = APIRouter(prefix='/dealer', tags=['dealer'], dependencies=[Depends(requ
 
 @router.patch('/{deal_id}/confirm', response_model=DealResponse)
 async def confirm_deal(deal_id: int, db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
-    result = await db.execute(select(Deals).options(selectinload(Deals.auto), selectinload(Deals.client)).where(Deals.id_deal == deal_id))
+    result = await db.execute(
+        select(Deals).options(selectinload(Deals.auto), selectinload(Deals.client)).where(Deals.id_deal == deal_id))
     deal: Deals = result.scalar_one_or_none()
     if deal is None:
         raise HTTPException(status_code=404, detail='deal not found')
@@ -85,3 +86,21 @@ async def get_pending_deals(dealer: Dealers = Depends(require_dealer), db: Async
         )
         for d in deals
     ]
+
+
+@router.get('/dealer_stats', response_model=DealerStatsOut)
+async def get_dealer_stats(db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
+    res = await db.execute(
+        select(Deals).options(selectinload(Deals.auto).selectinload(Autos.model).selectinload(Models.mark),
+                              selectinload(Deals.client)).where(Deals.id_dealer == dealer.id_dealer,
+                                                                Deals.deal_status == 'Confirmed'))
+    deals: list[Deals] = res.scalars().all()
+    deals_count = len(deals)
+
+    history = []
+    for i in deals:
+        dealer_history = DataString(date_deal=i.date_deal, mark=i.auto.model.mark.name_mark,
+                                    model=i.auto.model.name_model, year_release=i.auto.year_release,
+                                    name_client=i.client.name_client, client_phone=i.client.phone_client)
+        history.append(dealer_history)
+    return DealerStatsOut(name_dealer=dealer.name_dealer, deals_count=deals_count, deals_history=history)
