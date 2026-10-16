@@ -1,3 +1,5 @@
+from starlette.middleware.cors import CORSMiddleware
+
 from app.models import *
 from fastapi import FastAPI
 
@@ -21,6 +23,11 @@ app.include_router(auth_router)
 app.include_router(dealer_router)
 app.include_router(deals_router)
 app.include_router(client_router)
+app.add_middleware(CORSMiddleware,
+                   allow_origins=["http://localhost:63342", "http://127.0.0.1:63342"],
+                   allow_methods=["*"],
+                   allow_headers=["*"]
+                   )
 @app.get('/')
 def root():
     return {"message": "api is running!"}
