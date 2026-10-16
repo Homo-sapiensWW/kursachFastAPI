@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Реєстрація - AutoMarket</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <script>
+        function checkRegisterForm(obj) {
+            var errors = [];
+
+            // ПІБ: мінімум 2 слова (Ім'я Прізвище)
+            var reg_name = /^[А-ЯІЇЄҐа-яіїєґA-Za-z]+ [А-ЯІЇЄҐа-яіїєґA-Za-z]+/;
+            var name = obj.name.value.trim();
+            if(!reg_name.exec(name)) {
+                errors.push("ПІБ (мінімум Ім'я Прізвище)");
+            }
+
+            // Телефон: формат +380XXXXXXXXX (13 символів)
+            var reg_phone = /^\+380[0-9]{9}$/;
+            var phone = obj.phone.value.trim();
+            if(!reg_phone.exec(phone)) {
+                errors.push("Телефон (формат: +380991234567)");
+            }
+
+            // Пароль: мінімум 6 символів
+            var password = obj.password.value;
+            if(password.length < 6) {
+                errors.push("Пароль (мінімум 6 символів)");
+            }
+
+            // Email (якщо заповнено)
+            var email = obj.email.value.trim();
+            if(email != "") {
+                var reg_email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if(!reg_email.exec(email)) {
+                    errors.push("Email (невірний формат)");
+                }
+            }
+
+            // Виведення помилок
+            if(errors.length > 0) {
+                alert("Помилки у полях:\n\n" + errors.join("\n"));
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox" id="menu"></ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Реєстрація нового клієнта</p>
+    </div>
+
+    <div class="form-container">
+        <h2>Створення акаунту</h2>
+
+        <div class="error-message" id="error" style="display: none;"></div>
+
+        <form id="register-form">
+            <div class="form-group">
+                <label>ПІБ *</label>
+                <input type="text" name="name" placeholder="Іван Петренко" required>
+                <small style="color: #666; font-size: 12px;">Мінімум ім'я та прізвище</small>
+            </div>
+
+            <div class="form-group">
+                <label>Телефон (буде логіном) *</label>
+                <input type="text" name="phone" placeholder="+380991234567" required>
+                <small style="color: #666; font-size: 12px;">Формат: +380XXXXXXXXX</small>
+            </div>
+
+            <div class="form-group">
+                <label>Пароль *</label>
+                <input type="password" name="password" required>
+                <small style="color: #666; font-size: 12px;">Мінімум 6 символів</small>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="example@mail.com">
+            </div>
+
+            <div class="form-group">
+                <label>Адреса</label>
+                <input type="text" name="address" placeholder="м. Харків, вул. Сумська, 10">
+            </div>
+
+            <button type="submit" class="btn-submit">Зареєструватися</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p>Вже є акаунт? <a href="login.html" style="color: #ff6600; font-weight: bold; text-decoration: none;">Увійти</a></p>
+            <a href="index.html" class="btn-back" style="display: inline-block; margin-top: 10px; width: auto; padding: 10px 20px;">На головну</a>
+        </div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        renderMenu();
+
+        const form = document.getElementById('register-form');
+        const errorBox = document.getElementById('error');
+
+        function showError(text) {
+            errorBox.textContent = '✗ ' + text;
+            errorBox.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+
+            if (!checkRegisterForm(form)) return;
+
+            // пустые необязательные поля отправляем как null
+            const email = form.email.value.trim();
+            const address = form.address.value.trim();
+            const payload = {
+                name_client: form.name.value.trim(),
+                phone_client: form.phone.value.trim(),
+                email: email || null,
+                address_client: address || null,
+                password: form.password.value
+            };
+
+            try {
+                const res = await apiFetch(ROUTES.registerClient, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    noRedirect: true
+                });
+
+                if (res.ok) {
+                    alert('Акаунт створено! Тепер можна увійти.');
+                    location.href = 'login.html';
+                } else if (res.status === 400) {
+                    showError('Клієнт з таким телефоном вже існує');
+                } else if (res.status === 422) {
+                    showError('Перевірте правильність введених даних');
+                } else {
+                    showError('Помилка сервера (' + res.status + ')');
+                }
+            } catch (err) {
+                showError('Не вдалося зв\'язатися із сервером');
+            }
+        });
+    </script>
+</body>
+</html>
