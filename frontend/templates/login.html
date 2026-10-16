@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Вхід - AutoMarket</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox" id="menu"></ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Авторизація</p>
+    </div>
+
+    <div class="form-container">
+        <h2>Вхід у систему</h2>
+
+        <div class="error-message" id="error" style="display: none;"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label>Телефон (Логін)</label>
+                <input type="text" name="phone" placeholder="+380..." required>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-submit">Увійти</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p>Немає акаунту? <a href="register.html" style="color: #ff6600; font-weight: bold; text-decoration: none;">Зареєструватися</a></p>
+            <a href="index.html" class="btn-back" style="display: inline-block; margin-top: 10px; width: auto; padding: 10px 20px;">На головну</a>
+        </div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        renderMenu();
+
+        const form = document.getElementById('login-form');
+        const errorBox = document.getElementById('error');
+
+        function showError(text) {
+            errorBox.textContent = '✗ ' + text;
+            errorBox.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+
+            // FastAPI (OAuth2PasswordRequestForm) ждёт form-данные с полями username и password
+            const body = new URLSearchParams({
+                username: form.phone.value.trim(),
+                password: form.password.value
+            });
+
+            try {
+                const res = await apiFetch(ROUTES.login, { method: 'POST', body, noRedirect: true });
+                if (res.status === 401) {
+                    showError('Невірний телефон або пароль');
+                    return;
+                }
+                if (!res.ok) {
+                    showError('Помилка сервера (' + res.status + ')');
+                    return;
+                }
+                const data = await res.json();
+                localStorage.setItem('token', data.access_token);
+                location.href = 'index.html';
+            } catch (err) {
+                showError('Не вдалося зв\'язатися із сервером');
+            }
+        });
+    </script>
+</body>
+</html>
