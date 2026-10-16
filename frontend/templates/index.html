@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AutoMarket - Продаж уживаних автомобілів</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Ваш надійний автомобіль</p>
+    </div>
+
+    <!-- Часы с датой (Лаба 6) -->
+    <div id="clock-container">
+        <div id="date"></div>
+        <div id="time"></div>
+    </div>
+
+    <!--  (лаба 3) -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox" id="menu"></ul>
+    </div>
+
+    <!-- (лаба 1-2) -->
+    <div id="content">
+        <div id="sidebar">
+            <h3>Марки</h3>
+            <a href="#" id="all-marks">Всі марки</a>
+            <div id="marks-list"></div>
+        </div>
+
+        <div id="main">
+            <h2>Актуальні пропозиції</h2>
+            <div id="cars"></div>
+            <p id="empty" style="display: none;">Автомобілі не знайдені</p>
+            <a href="#" class="btn-buy" id="load-more" style="display: none;">Показати ще</a>
+        </div>
+    </div>
+
+    <div id="footer">
+        <p>AutoMarket - надійний партнер у виборі вашого автомобіля з 2010 року</p>
+        <p>Телефон: +38 (050) 123-45-67 | Email: info@automarket.ua</p>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        renderMenu();
+
+        const LIMIT = 20;
+        let skip = 0;
+        let markId = null;
+        const markNames = {};   // id марки -> название
+        const modelsById = {};  // id модели -> { name, markId }
+
+        // небольшой помощник: создать элемент с классом и текстом (textContent защищает от XSS)
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function formatNumber(n) {
+            return Math.round(Number(n)).toLocaleString('uk-UA');
+        }
+
+        function buildCard(car) {
+            const model = modelsById[car.id_model] || { name: '', markId: null };
+            const markName = markNames[model.markId] || '';
+            const title = [markName, model.name, car.year_release].join(' ').trim();
+
+            const card = el('div', 'car-card');
+
+            const imageBox = el('div', 'car-image');
+            if (car.photos && car.photos.length > 0) {
+                const img = document.createElement('img');
+                img.src = '../static/image/' + car.photos[0].photo_path;
+                img.alt = title;
+                imageBox.appendChild(img);
+            } else {
+                imageBox.appendChild(el('div', 'image-placeholder', 'Фото відсутнє'));
+            }
+
+            const info = el('div', 'car-info');
+            info.appendChild(el('h3', null, title));
+            info.appendChild(el('p', 'car-details',
+                'Пробіг: ' + formatNumber(car.mileage) + ' км | Двигун: ' +
+                car.engine_capacity + ' L ' + car.engine_type));
+            info.appendChild(el('p', 'car-description', car.description || ''));
+            info.appendChild(el('p', 'car-price', formatNumber(car.price) + ' USD'));
+            const buy = el('a', 'btn-buy', 'Купити');
+            buy.href = 'buy_car.html?id=' + car.id_auto;
+            info.appendChild(buy);
+
+            card.appendChild(imageBox);
+            card.appendChild(info);
+            return card;
+        }
+
+        async function loadCars(reset) {
+            if (reset) {
+                skip = 0;
+                document.getElementById('cars').innerHTML = '';
+            }
+            let url = ROUTES.cars + '?skip=' + skip + '&limit=' + LIMIT;
+            if (markId !== null) url += '&mark_id=' + markId;
+
+            const res = await apiFetch(url);
+            const cars = await res.json();
+
+            const box = document.getElementById('cars');
+            cars.forEach(car => box.appendChild(buildCard(car)));
+            skip += cars.length;
+
+            document.getElementById('empty').style.display = (skip === 0) ? 'block' : 'none';
+            document.getElementById('load-more').style.display = (cars.length === LIMIT) ? 'inline-block' : 'none';
+        }
+
+        async function init() {
+            const [marksRes, modelsRes] = await Promise.all([
+                apiFetch(ROUTES.marks), apiFetch(ROUTES.models)
+            ]);
+            const marks = await marksRes.json();
+            const models = await modelsRes.json();
+
+            const list = document.getElementById('marks-list');
+            marks.forEach(m => {
+                const id = m.mark_id ?? m.id_mark;   // на случай разных названий поля в схеме
+                markNames[id] = m.name_mark;
+                const a = el('a', null, m.name_mark);
+                a.href = '#';
+                a.addEventListener('click', (e) => { e.preventDefault(); markId = id; loadCars(true); });
+                list.appendChild(a);
+            });
+            models.forEach(m => {
+                modelsById[m.id_model] = { name: m.name_model, markId: m.id_mark ?? m.mark_id };
+            });
+
+            document.getElementById('all-marks').addEventListener('click', (e) => {
+                e.preventDefault(); markId = null; loadCars(true);
+            });
+            document.getElementById('load-more').addEventListener('click', (e) => {
+                e.preventDefault(); loadCars(false);
+            });
+
+            loadCars(true);
+        }
+        init();
+
+        // часы (лаба 6)
+        function updateClock() {
+            const now = new Date();
+            const days = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота'];
+            const months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+                            'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('date').textContent =
+                days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear() + ' р.';
+            document.getElementById('time').textContent =
+                pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
