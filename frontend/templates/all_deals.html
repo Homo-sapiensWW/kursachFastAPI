@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Всі договори - AutoMarket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .deals-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .deals-header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .deals-header h2 {
+            margin: 0 0 10px 0;
+            color: #ff6600;
+            border-bottom: 2px solid #ff6600;
+            padding-bottom: 10px;
+        }
+        
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filters-section h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-filter {
+            background-color: #ff6600;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-filter:hover {
+            background-color: #ff8833;
+        }
+        
+        .btn-reset {
+            background-color: #999;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-reset:hover {
+            background-color: #777;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h4 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff6600;
+        }
+        
+        .deals-table {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #f9f9f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #ff6600;
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-processing {
+            background-color: #FFC107;
+            color: #333;
+        }
+        
+        .status-confirmed {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox">
+            <li><a class="menu-item" href="/">Головна</a></li>
+            <li><a class="menu-item" href="/add_car">Додати авто</a></li>
+            <li><a class="menu-item" href="/admin">Панель керування</a></li>
+            <li><a class="menu-item" href="/all_deals">Всі договори</a></li>
+            <li><a class="menu-item" href="/dealer_stats">Моя статистика</a></li>
+            <li><a class="menu-item" href="/logout">Вихід ({{ session.name }})</a></li>
+            <li><a class="menu-item" href="#">Контакти</a></li>
+        </ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Всі договори</p>
+    </div>
+
+    <div class="deals-container">
+        <div class="deals-header">
+            <h2>📋 База даних договорів</h2>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="filters-section">
+            <h3>🔍 Фільтри</h3>
+            <form method="GET" action="/all_deals">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Статус:</label>
+                        <select name="status">
+                            <option value="all" {% if filter_status == 'all' %}selected{% endif %}>Всі</option>
+                            <option value="Processing" {% if filter_status == 'Processing' %}selected{% endif %}>Обробляється</option>
+                            <option value="Confirmed" {% if filter_status == 'Confirmed' %}selected{% endif %}>Підтверджено</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Дилер:</label>
+                        <select name="dealer">
+                            <option value="all" {% if filter_dealer == 'all' %}selected{% endif %}>Всі</option>
+                            {% for dealer in dealers %}
+                            <option value="{{ dealer.id_dealer }}" {% if filter_dealer == dealer.id_dealer|string %}selected{% endif %}>
+                                {{ dealer.namedealer }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Дата від:</label>
+                        <input type="date" name="date_from" value="{{ filter_date_from }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Дата до:</label>
+                        <input type="date" name="date_to" value="{{ filter_date_to }}">
+                    </div>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button type="submit" class="btn-filter">Застосувати фільтри</button>
+                    <a href="/all_deals" class="btn-reset" style="text-decoration: none; display: inline-block; text-align: center; line-height: 1.5;">Скинути</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h4>Знайдено договорів</h4>
+                <div class="number">{{ total_deals }}</div>
+            </div>
+            
+            <div class="stat-card">
+                <h4>Загальна сума</h4>
+                <div class="number" style="font-size: 24px;">
+                    {% if total_revenue %}
+                        {{ "{:,}".format(total_revenue|int).replace(',', ' ') }} USD
+                    {% else %}
+                        0 USD
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблица сделок -->
+        <div class="deals-table">
+            {% if deals %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Дата заявки</th>
+                        <th>Автомобіль</th>
+                        <th>Клієнт</th>
+                        <th>Телефон</th>
+                        <th>Дилер</th>
+                        <th>Сума</th>
+                        <th>Статус</th>
+                        <th>Дата продажу</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deal in deals %}
+                    <tr>
+                        <td><strong>{{ deal.id_deal }}</strong></td>
+                        <td>{{ deal.datedeal }}</td>
+                        <td>{{ deal.namemark }} {{ deal.namemodel }} {{ deal.yearrelease }}</td>
+                        <td>{{ deal.nameclient }}</td>
+                        <td>{{ deal.phoneclient }}</td>
+                        <td>{{ deal.namedealer if deal.namedealer else '—' }}</td>
+                        <td style="font-weight: bold; color: #4CAF50;">
+                            {{ "{:,}".format(deal.soldprice|int).replace(',', ' ') }} USD
+                        </td>
+                        <td>
+                            {% if deal.dealstatus == 'Processing' %}
+                            <span class="status-badge status-processing">Обробляється</span>
+                            {% else %}
+                            <span class="status-badge status-confirmed">Підтверджено</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ deal.datesale if deal.datesale else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                📭 Договорів не знайдено за обраними фільтрами
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/admin" class="btn-back" style="display: inline-block;">Повернутися до панелі</a>
+        </div>
+    </div>
+</body>
+</html>
