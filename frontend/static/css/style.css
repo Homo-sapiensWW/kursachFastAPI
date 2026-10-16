@@ -1,0 +1,252 @@
+/* Базовые стили */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+
+/* Шапка и футер */
+#header, #footer { 
+    background-color: #333; 
+    color: white; 
+    padding: 20px; 
+    text-align: center; 
+}
+
+/* Часы */
+#clock-container { 
+    background-color: #ff6600; 
+    color: white; 
+    padding: 10px; 
+    text-align: center; 
+}
+
+/* Бургер-меню */
+.menu-btn { 
+    position: fixed; 
+    top: 10px; 
+    left: 10px; 
+    width: 30px; 
+    height: 30px; 
+    cursor: pointer; 
+    z-index: 100; 
+}
+.menu-btn > span, .menu-btn > span::before, .menu-btn > span::after { 
+    display: block; 
+    position: absolute; 
+    width: 100%; 
+    height: 3px; 
+    background-color: #fff; 
+}
+.menu-btn > span::before { content: ''; top: -10px; }
+.menu-btn > span::after { content: ''; top: 10px; }
+
+#menu-toggle { display: none; }
+#menu-toggle:checked ~ .menubox { left: 0; }
+
+.menubox { 
+    position: fixed; 
+    top: 0; 
+    left: -250px; 
+    width: 250px; 
+    height: 100%; 
+    padding: 50px 0 20px 0; 
+    list-style: none; 
+    background-color: #444; 
+    transition: left 0.3s; 
+    z-index: 99; 
+}
+
+.menu-item { 
+    display: block; 
+    padding: 15px 20px; 
+    color: white; 
+    text-decoration: none; 
+    border-bottom: 1px solid #555; 
+}
+.menu-item:hover { background-color: #ff6600; }
+
+/* Контент */
+#content { max-width: 1200px; margin: 20px auto; padding: 20px; }
+#sidebar { float: left; width: 200px; background: white; padding: 15px; margin-right: 20px; border-radius: 5px; }
+#sidebar h3 { color: #ff6600; border-bottom: 2px solid #ff6600; padding-bottom: 5px; margin-bottom: 10px; }
+#sidebar a { display: block; padding: 8px; color: #333; text-decoration: none; border-radius: 3px; }
+#sidebar a:hover { background-color: #f0f0f0; color: #ff6600; }
+#main { margin-left: 240px; }
+#main h2 { color: #333; border-bottom: 2px solid #ff6600; padding-bottom: 10px; margin-bottom: 20px; }
+
+/* Карточки машин */
+.car-card { 
+    background: white; 
+    margin-bottom: 15px; 
+    padding: 15px; 
+    overflow: hidden; 
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s;
+}
+.car-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+.car-image { float: left; width: 200px; height: 140px; margin-right: 15px; border-radius: 3px; overflow: hidden; }
+.car-image img { width: 100%; height: 100%; object-fit: cover; }
+.image-placeholder { 
+    width: 100%; 
+    height: 100%; 
+    background-color: #ddd; 
+    border: 1px solid #999; 
+    text-align: center; 
+    line-height: 140px; 
+    color: #666;
+}
+.car-info { margin-left: 215px; }
+.car-info h3 { color: #333; margin-bottom: 10px; }
+.car-details { color: #666; margin: 8px 0; }
+.car-description { color: #777; margin: 10px 0; font-size: 14px; }
+.car-price { font-size: 22px; color: #ff6600; font-weight: bold; margin: 10px 0; }
+.btn-buy { 
+    display: inline-block; 
+    padding: 10px 25px; 
+    background-color: #ff6600; 
+    color: white; 
+    text-decoration: none; 
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+.btn-buy:hover { background-color: #ff8833; }
+
+/* Формы - КРАСИВЫЙ ДИЗАЙН */
+.form-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-container h2 {
+    color: #ff6600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ff6600;
+}
+
+.form-group { 
+    margin-bottom: 20px; 
+}
+
+.form-group label { 
+    display: block; 
+    margin-bottom: 8px; 
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea { 
+    width: 100%; 
+    padding: 12px; 
+    border: 2px solid #ddd; 
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #ff6600;
+    outline: none;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.btn-submit { 
+    background-color: #ff6600; 
+    color: white; 
+    padding: 12px 30px; 
+    border: none; 
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer; 
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.btn-submit:hover { 
+    background-color: #ff8833; 
+}
+
+.btn-back { 
+    display: inline-block;
+    background-color: #666; 
+    color: white; 
+    padding: 12px 30px; 
+    text-decoration: none; 
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    text-align: center;
+}
+
+.btn-back:hover {
+    background-color: #555;
+}
+
+.success-message { 
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 15px; 
+    margin-bottom: 20px; 
+    border-radius: 5px;
+}
+
+.error-message { 
+    background-color: #f44336; 
+    color: white; 
+    padding: 15px; 
+    margin-bottom: 20px; 
+    border-radius: 5px;
+}
+
+/* Clearfix */
+.car-card:after, #content:after { 
+    content: ""; 
+    display: table; 
+    clear: both; 
+}
+
+/* Дополнительные стили для профиля */
+.profile-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-card h3 {
+    color: #ff6600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ff6600;
+}
+
+.discount-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+}
