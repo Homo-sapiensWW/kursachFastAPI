@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.params import Depends
+from fastapi.params import Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -26,9 +26,12 @@ def require_client(client=Depends(get_current_user)):
 
 
 @router.get('', response_model=list[AutoResponse])
-async def get_available_cars(db: AsyncSession = Depends(get_db)):
+async def get_available_cars(mark_id: int | None = None, db: AsyncSession = Depends(get_db), skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100)):
     stmt = select(Autos).options(selectinload(Autos.model).selectinload(Models.mark), selectinload(Autos.photos)).where(
         Autos.status == "Available")
+    if mark_id is not None:
+        stmt = stmt.join(Models, Autos.id_model==Models.id_model).where(Models.id_mark==mark_id)
+    stmt = stmt.order_by(Autos.id_auto.desc()).offset(skip).limit(limit)
     result = await db.execute(stmt)
     autos = result.scalars().all()
     return autos
