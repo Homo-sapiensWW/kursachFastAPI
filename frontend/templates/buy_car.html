@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Купити автомобіль - AutoMarket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox">
+            <li><a class="menu-item" href="/">Головна</a></li>
+            <li><a class="menu-item" href="/profile">Мій кабінет</a></li>
+            <li><a class="menu-item" href="/logout">Вихід ({{ session.name }})</a></li>
+            <li><a class="menu-item" href="#">Контакти</a></li>
+        </ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Оформлення покупки</p>
+    </div>
+
+    <div class="form-container">
+        <h2>Купити автомобіль</h2>
+        
+        {% if success %}
+        <div class="success-message">
+            ✓ Ваша заявка успішно відправлена! Наш менеджер зв'яжеться з вами найближчим часом.
+        </div>
+        <a href="/" class="btn-back" style="display: block; text-align: center; margin-top: 20px;">Повернутися на головну</a>
+        <a href="/profile" class="btn-buy" style="display: block; text-align: center; margin-top: 10px; text-decoration: none;">Мій кабінет</a>
+        
+        {% else %}
+        
+        <!-- Превью автомобіля -->
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #ff6600;">
+            <h3 style="color: #ff6600; margin: 0 0 15px 0;">{{ car.namemark }} {{ car.namemodel }} {{ car.yearrelease }}</h3>
+            <p style="color: #666; margin: 5px 0;">Пробіг: {{ "{:,}".format(car.mileage).replace(',', ' ') }} км</p>
+            <p style="color: #666; margin: 5px 0;">Двигун: {{ car.enginecapacity }} L {{ car.enginetype }}</p>
+            <p style="color: #666; margin: 5px 0;">Коробка: {{ car.transmission }}</p>
+            
+            {% if discount > 0 %}
+            <p style="color: #999; text-decoration: line-through; margin-top: 10px;">Звичайна ціна: {{ "{:,}".format(car.price|int).replace(',', ' ') }} USD</p>
+            <p style="color: #4CAF50; font-weight: bold; margin: 5px 0;">🎉 Ваша знижка: {{ discount }}%</p>
+            <p style="font-size: 22px; color: #ff6600; font-weight: bold; margin-top: 5px;">{{ "{:,}".format(discounted_price|int).replace(',', ' ') }} USD</p>
+            {% else %}
+            <p style="font-size: 22px; color: #ff6600; font-weight: bold; margin-top: 10px;">{{ "{:,}".format(car.price|int).replace(',', ' ') }} USD</p>
+            {% endif %}
+        </div>
+
+        <!-- Інформаційне повідомлення -->
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; color: #1976d2;">
+            ℹ️ Заповніть форму і наш менеджер зв'яжеться з вами для підтвердження покупки
+        </div>
+        
+        {% if error %}
+        <div class="error-message">✗ Помилка: {{ error }}</div>
+        {% endif %}
+
+        <!-- Форма -->
+        <form action="/buy_car/{{ car.id_auto }}" method="POST">
+            <div class="form-group">
+                <label>Ваше ім'я</label>
+                <input type="text" name="name" value="{{ user.name }}" readonly style="background-color: #f0f0f0; color: #555;">
+            </div>
+
+            <div class="form-group">
+                <label>Телефон</label>
+                <input type="tel" name="phone" value="{{ user.phone }}" readonly style="background-color: #f0f0f0; color: #555;">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ user.email }}" readonly style="background-color: #f0f0f0; color: #555;">
+            </div>
+
+            <div class="form-group">
+                <label>Адреса доставки</label>
+                <input type="text" name="address" value="{{ user.address }}" placeholder="м. Харків, вул. Сумська, 10">
+            </div>
+
+            <button type="submit" class="btn-submit">Підтвердити замовлення</button>
+            <a href="/" class="btn-back" style="display: block; text-align: center; margin-top: 15px;">Скасувати</a>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
