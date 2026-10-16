@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Моя статистика - AutoMarket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .stats-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .stats-header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stats-header h2 {
+            margin: 0 0 10px 0;
+            color: #ff6600;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 18px;
+            font-weight: normal;
+        }
+        
+        .stat-card .number {
+            font-size: 64px;
+            font-weight: bold;
+            color: #ff6600;
+        }
+        
+        .deals-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .deals-section h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            border-bottom: 2px solid #ff6600;
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #f9f9f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #ff6600;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox">
+            <li><a class="menu-item" href="/">Головна</a></li>
+            <li><a class="menu-item" href="/add_car">Додати авто</a></li>
+            <li><a class="menu-item" href="/admin">Панель керування</a></li>
+            <li><a class="menu-item" href="/dealer_stats">Моя статистика</a></li>
+            <li><a class="menu-item" href="/all_deals">Всі договори</a></li>
+            <li><a class="menu-item" href="/logout">Вихід ({{ session.name }})</a></li>
+            <li><a class="menu-item" href="#">Контакти</a></li>
+        </ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Статистика роботи дилера</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-header">
+            <h2>{{ dealer_name }}</h2>
+            <p style="color: #666; margin: 5px 0 0 0;">Персональна статистика</p>
+        </div>
+
+        <!-- Карточка с количеством заявок -->
+        <div class="stat-card">
+            <h3>Підтверджених заявок</h3>
+            <div class="number">{{ stats if stats else 0 }}</div>
+        </div>
+
+        <!-- Таблица заявок -->
+        <div class="deals-section">
+            <h3>Мої підтверджені заявки</h3>
+            
+            {% if my_deals %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата заявки</th>
+                        <th>Автомобіль</th>
+                        <th>Клієнт</th>
+                        <th>Телефон</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deal in my_deals %}
+                    <tr>
+                        <td>{{ deal[1] }}</td>
+                        <td><strong>{{ deal[5] }} {{ deal[6] }} {{ deal[7] }}</strong></td>
+                        <td>{{ deal[3] }}</td>
+                        <td>{{ deal[4] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                📊 Ви ще не підтвердили жодної заявки
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/admin" class="btn-back" style="display: inline-block;">Повернутися до панелі</a>
+        </div>
+    </div>
+</body>
+</html>
