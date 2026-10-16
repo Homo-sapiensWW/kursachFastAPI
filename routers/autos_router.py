@@ -38,14 +38,14 @@ async def get_available_cars(mark_id: int | None = None, db: AsyncSession = Depe
 
 
 @router.get('/marks', response_model=list[MarkResponse])
-async def get_marks(db: AsyncSession = Depends(get_db), dealer: Dealers = Depends(require_dealer)):
+async def get_marks(db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(Marks))
     marks = res.scalars().all()
     return marks
 
 
 @router.get('/models', response_model=list[ModelResponse] )
-async def get_models(db: AsyncSession = Depends(get_db),dealer: Dealers = Depends(require_dealer)):
+async def get_models(db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(Models))
     models = res.scalars().all()
     return models
