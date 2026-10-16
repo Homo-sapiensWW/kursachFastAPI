@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Додати автомобіль - AutoMarket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        function checkForm(obj) {
+            var error = "";
+            
+            var reg_vin = /^[A-HJ-NPR-Z0-9]{17}$/i;
+            var reg_year = /^(199[0-9]|20[0-1][0-9]|202[0-5])$/;
+            
+            // Перевірка
+            if(obj.vin.value.trim() == "") error += "VIN ";
+            else if(!reg_vin.exec(obj.vin.value.trim())) error += "VIN(формат) ";
+            if(!reg_year.exec(obj.year.value)) error += "Рік ";
+            if(obj.price.value <= 0) error += "Ціна ";
+            if(obj.mileage.value < 0) error += "Пробіг ";
+            if(obj.engine_capacity.value < 0.5 || obj.engine_capacity.value > 8) error += "Об'єм ";
+            if(obj.engine_type.value == "") error += "Двигун ";
+            if(obj.transmission.value == "") error += "Коробка ";
+            if(obj.drive_type.value == "") error += "Привід ";
+            
+            if(error != "") {
+                alert("Помилка: " + error);
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox">
+            <li><a class="menu-item" href="/">Головна</a></li>
+            <li><a class="menu-item" href="/add_car">Додати авто</a></li>
+            <li><a class="menu-item" href="/admin">Панель керування</a></li>
+            <li><a class="menu-item" href="/dealer_stats">Моя статистика</a></li>
+            <li><a class="menu-item" href="/all_deals">Всі договори</a></li>
+            <li><a class="menu-item" href="/logout">Вихід ({{ session.name }})</a></li>
+            <li><a class="menu-item" href="#">Контакти</a></li>
+        </ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Панель керування</p>
+    </div>
+
+    <div class="form-container" style="max-width: 700px;">
+        <h2>Додати автомобіль</h2>
+        
+        {% if success %}
+        <div class="success-message">✓ Автомобіль успішно додано!</div>
+        {% endif %}
+        
+        {% if error %}
+        <div class="error-message">✗ {{ error }}</div>
+        {% endif %}
+
+        <!-- ========================================
+             КАСКАДНЕ ЗАПОЛНЕНИЕ БЕЗ JAVASCRIPT
+             ======================================== -->
+
+        <!-- Форма для выбора марки -->
+        <form method="GET" action="/add_car" style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #e0e0e0;">
+            <div class="form-group">
+                <label style="font-size: 16px; font-weight: bold; color: #333;">
+                    📋 ШАГ 1: Оберіть марку автомобіля
+                </label>
+                <input type="text" 
+                       name="selected_mark" 
+                       list="marks-list" 
+                       value="{{ selected_mark or '' }}"
+                       placeholder="Почніть вводити (Toyota, BMW, Volkswagen...)"
+                       style="width: 100%; padding: 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;"
+                       required>
+                <datalist id="marks-list">
+                    {% for mark in marks %}
+                    <option value="{{ mark.namemark }}">
+                    {% endfor %}
+                </datalist>
+                <small style="color: #666; font-size: 12px;">
+                    💡 Введіть назву марки або оберіть з підказок. Можна ввести нову марку.
+                </small>
+            </div>
+            
+            <button type="submit" style="background: #4CAF50; color: white; padding: 12px 24px; border: none; cursor: pointer; border-radius: 4px; font-size: 15px; font-weight: bold; margin-top: 10px;">
+                ➡️ Завантажити моделі для цієї марки
+            </button>
+        </form>
+
+        {% if selected_mark %}
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #4CAF50;">
+            ✅ Марка обрана: <strong style="font-size: 16px;">{{ selected_mark }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- Основная форма добавления -->
+        {% if selected_mark %}
+        <form action="/add_car" method="POST" onsubmit="return checkForm(this);">
+            
+            <!-- Скрытое поле с маркой -->
+            <input type="hidden" name="mark" value="{{ selected_mark }}">
+            
+            <!-- Показываем выбранную марку -->
+            <div class="form-group">
+                <label>Марка (обрана):</label>
+                <input type="text" 
+                       value="{{ selected_mark }}" 
+                       readonly 
+                       style="background: #f5f5f5; color: #666; cursor: not-allowed;">
+            </div>
+
+            <!-- ШАГ 2: Выбор модели -->
+            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ffb74d;">
+                <label style="font-size: 16px; font-weight: bold; color: #333; display: block; margin-bottom: 15px;">
+                    🚗 ШАГ 2: Оберіть модель
+                </label>
+                
+                {% if models %}
+                    <!-- Есть модели - показываем выбор -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                            <input type="radio" name="model_type" value="existing" checked style="margin-right: 8px;">
+                            <strong>Обрати існуючу модель</strong>
+                        </label>
+                        
+                        <div class="form-group" style="margin-left: 25px;">
+                            <select name="model_select" style="width: 100%; padding: 10px;">
+                                <option value="">-- Оберіть модель --</option>
+                                {% for model in models %}
+                                <option value="{{ model.id_model }}">{{ model.namemodel }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="color: #666; font-size: 12px;">
+                                💡 Список містить тільки моделі марки {{ selected_mark }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                            <input type="radio" name="model_type" value="new" style="margin-right: 8px;">
+                            <strong>Додати нову модель</strong>
+                        </label>
+                        
+                        <div class="form-group" style="margin-left: 25px;">
+                            <input type="text" 
+                                   name="new_model_name" 
+                                   placeholder="Введіть назву нової моделі (наприклад: Polo)"
+                                   style="width: 100%; padding: 10px;">
+                            <small style="color: #ff6600; font-size: 12px;">
+                                ⚠️ Нова модель буде автоматично додана до БД
+                            </small>
+                        </div>
+                    </div>
+                    
+                {% else %}
+                    <!-- Моделей нет - только ввод новой -->
+                    <p style="color: #ff6600; margin-bottom: 15px; font-weight: bold;">
+                        ⚠️ У марки {{ selected_mark }} ще немає моделей у БД
+                    </p>
+                    <div class="form-group">
+                        <label>Назва нової моделі: *</label>
+                        <input type="text" 
+                               name="new_model_name" 
+                               placeholder="Введіть назву моделі (наприклад: 911)"
+                               required
+                               style="width: 100%; padding: 10px;">
+                        <input type="hidden" name="model_type" value="new">
+                        <small style="color: #666; font-size: 12px;">
+                            💡 Модель буде автоматично створена для марки {{ selected_mark }}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- VIN та рік -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>VIN *</label>
+                    <input type="text" name="vin" maxlength="17" placeholder="17 символів" required>
+                </div>
+                <div class="form-group">
+                    <label>Рік випуску *</label>
+                    <input type="number" name="year" min="1990" max="2025" placeholder="2018" required>
+                </div>
+            </div>
+            
+            <!-- Ціна та пробіг -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ціна (USD) *</label>
+                    <input type="number" name="price" min="0" placeholder="15000" required>
+                </div>
+                <div class="form-group">
+                    <label>Пробіг (км) *</label>
+                    <input type="number" name="mileage" min="0" placeholder="45000" required>
+                </div>
+            </div>
+            
+            <!-- Двигун та об'єм -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Тип двигуна *</label>
+                    <select name="engine_type" required>
+                        <option value="">Оберіть тип</option>
+                        <option value="Petrol">Бензин</option>
+                        <option value="Diesel">Дизель</option>
+                        <option value="Electric">Електро</option>
+                        <option value="Hybrid">Гібрид</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Об'єм двигуна (L) *</label>
+                    <input type="number" name="engine_capacity" step="0.1" placeholder="2.5" required>
+                </div>
+            </div>
+            
+            <!-- Коробка та привід -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Коробка передач *</label>
+                    <select name="transmission" required>
+                        <option value="">Оберіть тип</option>
+                        <option value="Manual">Механіка</option>
+                        <option value="Automatic">Автомат</option>
+                        <option value="Robot">Робот</option>
+                        <option value="CVT">CVT</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Привід *</label>
+                    <select name="drive_type" required>
+                        <option value="">Оберіть тип</option>
+                        <option value="FWD">Передній</option>
+                        <option value="RWD">Задній</option>
+                        <option value="AWD">Повний</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Колір -->
+            <div class="form-group">
+                <label>Колір</label>
+                <input type="text" name="color" placeholder="Чорний">
+            </div>
+            
+            <!-- Опис -->
+            <div class="form-group">
+                <label>Опис</label>
+                <textarea name="description" placeholder="Додаткова інформація про автомобіль..."></textarea>
+            </div>
+            
+            <!-- Фото -->
+            <div class="form-group">
+                <label>Шлях до фото</label>
+                <input type="text" name="photo" placeholder="image/toyota_camry.jpg">
+            </div>
+
+            <button type="submit" class="btn-submit" style="background: #2196F3; font-size: 16px; padding: 14px;">
+                ➕ Додати автомобіль
+            </button>
+            <a href="/" class="btn-back" style="display: inline-block; margin-top: 15px; width: 100%; text-align: center;">Скасувати</a>
+        </form>
+
+        {% else %}
+        
+        <!-- Марка не выбрана -->
+        <div style="text-align: center; padding: 50px 20px; background: #f9f9f9; border-radius: 8px; border: 2px dashed #ccc;">
+            <p style="font-size: 18px; color: #999; margin: 0;">
+                ⬆️ Спочатку оберіть марку вище
+            </p>
+            <p style="font-size: 14px; color: #bbb; margin-top: 10px;">
+                Після вибору марки з'явиться форма для додавання автомобіля
+            </p>
+        </div>
+        
+        {% endif %}
+    </div>
+</body>
+</html>
