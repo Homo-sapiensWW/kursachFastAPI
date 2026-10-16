@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Панель керування - AutoMarket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .admin-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .admin-header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .admin-header h2 {
+            margin: 0;
+            color: #ff6600;
+        }
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #ff6600;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6600;
+        }
+        .deals-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .deals-section h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 22px;
+            border-bottom: 2px solid #ff6600;
+            padding-bottom: 10px;
+        }
+        .deal-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff6600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .deal-info h4 {
+            margin: 0 0 10px 0;
+            color: #ff6600;
+            font-size: 18px;
+        }
+        .deal-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .deal-info .price {
+            font-size: 22px;
+            color: #ff6600;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .btn-confirm {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .btn-confirm:hover {
+            background-color: #45a049;
+        }
+        .no-deals {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .date-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div id="navigation">
+        <input id="menu-toggle" type="checkbox" />
+        <label class="menu-btn" for="menu-toggle">
+            <span></span>
+        </label>
+        <ul class="menubox">
+            <li><a class="menu-item" href="/">Головна</a></li>
+            <li><a class="menu-item" href="/add_car">Додати авто</a></li>
+            <li><a class="menu-item" href="/admin">Панель керування</a></li>
+            <li><a class="menu-item" href="/dealer_stats">Моя статистика</a></li>
+            <li><a class="menu-item" href="/all_deals">Всі договори</a></li>
+            <li><a class="menu-item" href="/logout">Вихід ({{ session.name }})</a></li>
+            <li><a class="menu-item" href="#">Контакти</a></li>
+        </ul>
+    </div>
+
+    <div id="header">
+        <h1>AutoMarket</h1>
+        <p>Панель керування дилера</p>
+    </div>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h2>Панель керування заявками</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Нових заявок</h3>
+                    <div class="number">{{ pending_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if success %}
+        <div class="success-message">
+            ✓ Покупку успішно підтверджено! Автомобіль знято з продажу.
+        </div>
+        {% endif %}
+
+        <div class="deals-section">
+            <h3>Необроблені заявки</h3>
+            
+            {% if deals %}
+                {% for deal in deals %}
+                <div class="deal-card">
+                    <div class="deal-info">
+                        <h4>{{ deal.namemark }} {{ deal.namemodel }} {{ deal.yearrelease }}</h4>
+                        <p><strong>Клієнт:</strong> {{ deal.nameclient }}</p>
+                        <p><strong>Телефон:</strong> {{ deal.phoneclient }}</p>
+                        {% if deal.email %}
+                        <p><strong>Email:</strong> {{ deal.email }}</p>
+                        {% endif %}
+                        <span class="date-badge">{{ deal.datedeal }}</span>
+                        <p class="price">{{ "{:,}".format(deal.soldprice|int).replace(',', ' ') }} USD</p>
+                    </div>
+                    <td>
+                        <a href="/confirm_deal/{{ deal.id_deal }}" class="btn-buy">✓ Підтвердити</a>
+                        <a href="/reject_deal/{{ deal.id_deal }}" 
+                        onclick="return confirm('Відхилити заявку? Автомобіль повернеться в продаж.')" 
+                        class="btn-back" 
+                        style="background: #f44336; color: white; margin-left: 10px; display: inline-block; text-decoration: none;">
+                            ✗ Відхилити
+                        </a>
+                    </td>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-deals">
+                    ℹ️ Немає необроблених заявок
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" class="btn-back" style="display: inline-block;">Повернутися на головну</a>
+        </div>
+    </div>
+</body>
+</html>
